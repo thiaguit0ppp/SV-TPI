@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const db = require("../config/db");
 const { validarCredenciales, hashPassword } = require("./login");
-const { generarToken } = require("../middlewares/auth");
+const { generarToken, validarUsuario } = require("../middlewares/auth");
 
 router.get("/login", async (req, res) => {
     try {
@@ -10,7 +10,22 @@ router.get("/login", async (req, res) => {
         const token = generarToken({ id: user.id, email: user.email, rol_id: user.rol_id });
         res.status(200).json({ user, token });
     } catch (error) {
-        res.status(401).send({ err: error.message })
+        res.status(401).json({ error: error.message })
+    }
+});
+
+router.get("/", validarUsuario([1]), async (req, res) => {
+    try {
+        const sql = "SELECT * FROM usuarios WHERE eliminado = 0";
+        db.query(sql)
+            .then(([rows]) => {
+                res.status(200).json(rows);
+            })
+            .catch((error) => {
+                res.status(500).json({ error: error.message });
+            });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -24,14 +39,14 @@ router.post("/", async (req, res) => {
                 res.status(201).json({ message: "Usuario creado con éxito", id: rows.insertId })
             })
             .catch((error) => {
-                res.status(500).send({ err: error.message })
+                res.status(500).json({ error: error.message })
             })
     } catch (error) {
-        res.status(500).send({ err: error.message })
+        res.status(500).json({ error: error.message })
     }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", validarUsuario([1]), async (req, res) => {
     try {
         const { id } = req.params;
         const { nombre, apellido, dni, email, fecha_nacimiento, password, rol_id } = req.body;
@@ -42,14 +57,14 @@ router.put("/:id", async (req, res) => {
                 res.status(200).json({ message: "Usuario actualizado con éxito" })
             })
             .catch((error) => {
-                res.status(500).send({ err: error.message })
+                res.status(500).json({ error: error.message })
             })
     } catch (error) {
-        res.status(500).send({ err: error.message })
+        res.status(500).json({ error: error.message })
     }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", validarUsuario([1]), async (req, res) => {
     try {
         const { id } = req.params;
         const sql = "UPDATE usuarios SET eliminado = 1 WHERE id = ?";
@@ -59,10 +74,10 @@ router.delete("/:id", async (req, res) => {
                 res.status(200).json({ message: "Usuario eliminado con éxito" })
             })
             .catch((error) => {
-                res.status(500).send({ err: error.message })
+                res.status(500).json({ error: error.message })
             })
     } catch (error) {
-        res.status(500).send({ err: error.message })
+        res.status(500).json({ error: error.message })
     }
 });
 

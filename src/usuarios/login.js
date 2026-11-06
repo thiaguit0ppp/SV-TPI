@@ -12,7 +12,12 @@ async function validarCredenciales(email, password) {
 
 async function hashPassword(password) {
     const saltRounds = 10;
-    return bcrypt.hash(password, saltRounds);
+    try {
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        return hashedPassword;
+    } catch (error) {
+        throw new Error("Error al hashear la contraseña");
+    }
 }
 
 module.exports = { validarCredenciales, hashPassword };
