@@ -13,7 +13,7 @@ function validarUsuario(rolesPermitidos = []) {
 
         try {
             const datos = jwt.verify(token, TOKEN_SECRET);
-            if(!rolesPermitidos.includes(datos.rol) && rolesPermitidos.length > 0) {
+            if(!rolesPermitidos.includes(datos.rol_id) && rolesPermitidos.length > 0) {
                 return res.status(403).json({ error: "No tienes permisos para realizar esta acción" });
             }
             req.user = datos;
