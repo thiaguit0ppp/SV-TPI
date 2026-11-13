@@ -20,6 +20,7 @@ router.get("/", async (req, res) => {
 router.post("/", validarUsuario([2]), async (req, res) => {
     try {
         const { nombre, imagen_url, numero_contacto, biografia, ubicacion_id } = req.body;
+        const user_vendedor = req.user.id
         const sql = "INSERT INTO negocios (nombre, imagen_url, numero_contacto, biografia, user_vendedor, ubicacion_id) VALUES (?, ?, ?, ?, ?, ?)";
         
         db.query(sql, [nombre, imagen_url, numero_contacto, biografia, user_vendedor, ubicacion_id])
