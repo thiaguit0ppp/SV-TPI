@@ -6,6 +6,7 @@ const categoriasRouter = require("./categorias/categoriasMain");
 const negociosRouter = require("./negocios/negociosMain");
 const productosRouter = require("./productos/productosMain");
 const resenasRouter = require("./resenas/resenasMain.js");
+const comentariosRouter = require("./comentarios/comentariosMain")
 const ubicacionesNegociosRouter = require("./ubicaciones/ubicacionesNegociosMain");
 const ubicacionesUsuariosRouter = require("./ubicaciones/ubicacionesUsuariosMain");
 
@@ -16,6 +17,7 @@ app.use("/api/categorias", categoriasRouter);
 app.use("/api/negocios", negociosRouter);
 app.use("/api/productos", productosRouter);
 app.use("/api/resenas", resenasRouter);
+app.use("/api/comentarios", comentariosRouter);
 app.use("/api/ubicacionesNegocios", ubicacionesNegociosRouter);
 app.use("/api/ubicacionesUsuarios", ubicacionesUsuariosRouter);
 
