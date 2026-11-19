@@ -29,6 +29,40 @@ router.get("/", validarUsuario([1]), async (req, res) => {
     }
 });
 
+
+router.get("/empleados/solicitudes", validarUsuario([3]), async (req, res) => {
+    try {
+        const id = req.user.id;
+        
+        // Obtener solicitudes pendientes del empleado
+        const sql = `
+            SELECT
+                en.id AS id_solicitud,
+                en.estado,
+                en.created_at,
+                n.id AS id_negocio,
+                n.nombre AS nombre_negocio,
+                n.imagen_url,
+                n.numero_contacto,
+                n.biografia
+            FROM empleados_negocios en
+            INNER JOIN negocios n ON en.negocio_id = n.id
+            WHERE en.usuario_id = ?
+              AND en.estado = 'pendiente'
+              AND n.eliminado = 0
+            ORDER BY en.created_at DESC
+        `;
+
+        const [rows] = await db.query(sql, [id]);
+        return res.status(200).json(rows);
+    } catch (error) {
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+
 router.post("/", async (req, res) => {
     try {
         const { nombre, apellido, dni, email, fecha_nacimiento, password, rol_id } = req.body;
@@ -135,6 +169,59 @@ router.put("/:id", validarUsuario([1]), async (req, res) => {
         res.status(500).json({ error: error.message })
     }
 });
+
+
+router.put("/empleados/vincular", validarUsuario([3]), async (req, res) => {
+    try {
+        const id_empleado = req.user.id
+        const { id_negocio } = req.body;
+
+        // Validar datos obligatorios
+        if (!id_negocio) {
+            return res.status(400).json({
+                error: "El id del negocio es obligatorio"
+            });
+        }
+
+        // Buscar la solicitud pendiente
+        const sql = `
+            SELECT id
+            FROM empleados_negocios
+            WHERE usuario_id = ?
+              AND negocio_id = ?
+              AND estado = 'pendiente'
+        `;
+
+        const [solicitudes] = await db.query(sql, [
+            id_empleado,
+            id_negocio
+        ]);
+
+        if (solicitudes.length === 0) {
+            return res.status(404).json({
+                error: "No existe una solicitud pendiente para este negocio"
+            });
+        }
+
+        // Aceptar solicitud
+        await db.query(
+            `UPDATE empleados_negocios
+             SET estado = 'aceptada'
+             WHERE id = ?`,
+            [solicitudes[0].id]
+        );
+
+        return res.status(200).json({
+            message: "Te has vinculado correctamente al negocio"
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
 
 router.delete("/:id", validarUsuario([1]), async (req, res) => {
     try {
