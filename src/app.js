@@ -6,7 +6,8 @@ const categoriasRouter = require("./categorias/categoriasMain");
 const negociosRouter = require("./negocios/negociosMain");
 const productosRouter = require("./productos/productosMain");
 const resenasRouter = require("./resenas/resenasMain.js");
-const comentariosRouter = require("./comentarios/comentariosMain")
+const comentariosRouter = require("./comentarios/comentariosMain");
+const pedidosRouter = require("./pedidos/pedidosMain.js");
 const ubicacionesNegociosRouter = require("./ubicaciones/ubicacionesNegociosMain");
 const ubicacionesUsuariosRouter = require("./ubicaciones/ubicacionesUsuariosMain");
 
@@ -18,11 +19,12 @@ app.use("/api/negocios", negociosRouter);
 app.use("/api/productos", productosRouter);
 app.use("/api/resenas", resenasRouter);
 app.use("/api/comentarios", comentariosRouter);
+app.use("/api/pedidos", pedidosRouter);
 app.use("/api/ubicacionesNegocios", ubicacionesNegociosRouter);
 app.use("/api/ubicacionesUsuarios", ubicacionesUsuariosRouter);
 
 app.get("/",(req,res) =>{
-    res.send("Bienvenidos a la api de Mi Emprendimiento")
+    res.send("Bienvenidos a la api de KeKeYa!")
 })
 
 module.exports = app;
