@@ -152,24 +152,20 @@ router.post("/empleados/solicitud", validarUsuario([2]), async (req, res) => {
 });
 
 
-router.put("/:id", validarUsuario([1]), async (req, res) => {
+router.put("/", validarUsuario([2, 3, 4]), async (req, res) => {
     try {
-        const { id } = req.params;
-        const { nombre, apellido, dni, email, fecha_nacimiento, password, rol_id } = req.body;
-        const sql = "UPDATE usuarios SET nombre = ?, apellido = ?, dni = ?, email = ?, fecha_nacimiento = ?, password_hash = ?, rol_id = ? WHERE id = ?";
+        const id = req.user.id;
+        const { nombre, apellido, dni, email, fecha_nacimiento, password } = req.body;
+        const sql = "UPDATE usuarios SET nombre = ?, apellido = ?, dni = ?, email = ?, fecha_nacimiento = ?, password_hash = ? WHERE id = ?";
         const hashedPassword = await hashPassword(password);
-        db.query(sql, [nombre, apellido, dni, email, fecha_nacimiento, hashedPassword, rol_id, id])
-            .then(() => {
-                res.status(200).json({ message: "Usuario actualizado con éxito" })
-            })
-            .catch((error) => {
-                res.status(500).json({ error: error.message })
-            })
+
+        await db.query(sql, [nombre, apellido, dni, email, fecha_nacimiento, hashedPassword, id]);
+
+        res.status(200).json({ message: "Usuario actualizado con éxito" });
     } catch (error) {
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ error: error.message });
     }
 });
-
 
 router.put("/empleados/vincular", validarUsuario([3]), async (req, res) => {
     try {
