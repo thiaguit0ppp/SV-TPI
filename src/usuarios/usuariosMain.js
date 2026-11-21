@@ -33,7 +33,7 @@ router.get("/", validarUsuario([1]), async (req, res) => {
 router.get("/empleados/solicitudes", validarUsuario([3]), async (req, res) => {
     try {
         const id = req.user.id;
-        
+
         // Obtener solicitudes pendientes del empleado
         const sql = `
             SELECT
@@ -167,15 +167,28 @@ router.put("/", validarUsuario([2, 3, 4]), async (req, res) => {
     }
 });
 
-router.put("/empleados/vincular", validarUsuario([3]), async (req, res) => {
+router.put("/empleados/respuesta", validarUsuario([3]), async (req, res) => {
     try {
-        const id_empleado = req.user.id
-        const { id_negocio } = req.body;
+        const id_empleado = req.user.id;
+        const { id_negocio, respuesta } = req.body;
+        const respuestasValidas = ["aceptada", "rechazada"];
 
         // Validar datos obligatorios
         if (!id_negocio) {
             return res.status(400).json({
                 error: "El id del negocio es obligatorio"
+            });
+        }
+
+        if (!respuesta) {
+            return res.status(400).json({
+                error: "La respuesta es obligatoria"
+            });
+        }
+
+        if (!respuestasValidas.includes(respuesta)) {
+            return res.status(400).json({
+                error: "Respuesta no valida"
             });
         }
 
@@ -199,16 +212,96 @@ router.put("/empleados/vincular", validarUsuario([3]), async (req, res) => {
             });
         }
 
-        // Aceptar solicitud
+        // Actualizar solicitud
         await db.query(
             `UPDATE empleados_negocios
-             SET estado = 'aceptada'
+             SET estado = ?
              WHERE id = ?`,
-            [solicitudes[0].id]
+            [respuesta, solicitudes[0].id]
+        );
+
+        const message = respuesta === "aceptada"
+            ? "Te has vinculado correctamente al negocio"
+            : "Has rechazado la solicitud correctamente";
+
+        return res.status(200).json({
+            message
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+
+router.put("/empleados/desvincular", validarUsuario([2]), async (req, res) => {
+    try {
+        const { email, id_negocio } = req.body;
+
+        // Validar datos obligatorios
+        if (!email || !id_negocio) {
+            return res.status(400).json({
+                error: "El email y el id del negocio son obligatorios"
+            });
+        }
+
+        // Verificar que el negocio pertenezca al vendedor autenticado
+        const [negocios] = await db.query(
+            `SELECT id FROM negocios
+             WHERE id = ? AND user_vendedor = ? AND eliminado = 0`,
+            [id_negocio, req.user.id]
+        );
+
+        if (negocios.length === 0) {
+            return res.status(404).json({
+                error: "No se encontró el negocio o no tienes permisos sobre él"
+            });
+        }
+
+        // Buscar al empleado por email
+        const [usuarios] = await db.query(
+            `SELECT id FROM usuarios
+             WHERE email = ? AND eliminado = 0`,
+            [email]
+        );
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({
+                error: "No se encontró un usuario con ese email"
+            });
+        }
+
+        const id_empleado = usuarios[0].id;
+
+        // Verificar que exista una vinculación aceptada
+        const [vinculaciones] = await db.query(
+            `SELECT id FROM empleados_negocios
+             WHERE usuario_id = ?
+               AND negocio_id = ?
+               AND estado = 'aceptada'`,
+            [id_empleado, id_negocio]
+        );
+
+        if (vinculaciones.length === 0) {
+            return res.status(404).json({
+                error: "El empleado no está vinculado a este negocio"
+            });
+        }
+
+        // Desvincular al empleado
+        await db.query(
+            `UPDATE empleados_negocios
+            SET estado = 'expulsada'
+            WHERE usuario_id = ?
+            AND negocio_id = ?
+            AND estado = 'aceptada'`,
+            [id_empleado, id_negocio]
         );
 
         return res.status(200).json({
-            message: "Te has vinculado correctamente al negocio"
+            message: "Empleado desvinculado correctamente del negocio"
         });
 
     } catch (error) {
